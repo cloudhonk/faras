@@ -1,3 +1,3 @@
 module github.com/cloudhonk/faras
 
-go 1.22.1
+go 1.23.1
