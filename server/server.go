@@ -47,17 +47,23 @@ func (s *GameServer) StartServer() {
 }
 
 func (s *GameServer) handleConnection(conn net.Conn) {
-	defer conn.Close()
-	s.addPlayer(conn)
+	if condition := s.addPlayer(conn); !condition {
+		conn.Close()
+		return
+	}
 	if len(s.GameInstance.Juwadeys) == MAX_PLAYERS {
 		go s.GameInstance.GameLoop()
 	}
 
-	// Keep the connection open
-	select {}
+	// Block until we receive a signal that the game has ended
+	select {
+	case <-s.GameInstance.End:
+		s.GameInstance.Reset()
+		return
+	}
 }
 
-func (s *GameServer) addPlayer(conn net.Conn) {
+func (s *GameServer) addPlayer(conn net.Conn) bool {
 
 	var playerName string
 	fmt.Fprintln(conn, "Enter your name: ")
@@ -67,7 +73,7 @@ func (s *GameServer) addPlayer(conn net.Conn) {
 	if len(s.GameInstance.Juwadeys) >= MAX_PLAYERS {
 		fmt.Fprintln(conn, "The game is full!")
 		s.mu.Unlock()
-		return
+		return false
 	}
 
 	juwadey := khel.NewJuwadey(playerName, conn)
@@ -75,5 +81,5 @@ func (s *GameServer) addPlayer(conn net.Conn) {
 	s.mu.Unlock()
 
 	fmt.Fprintf(conn, "Welcome, %s! Waiting for other players...\n", playerName)
-
+	return true
 }

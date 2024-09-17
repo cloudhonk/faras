@@ -2,7 +2,6 @@ package khel
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/cloudhonk/faras/bung"
@@ -15,11 +14,13 @@ const MAX_ROUND = 10
 type Faras struct {
 	Juwadeys     []*Juwadey
 	CurrentRound int
+	End          chan struct{}
 }
 
 func NewFaras() *Faras {
 	f := Faras{
 		Juwadeys: []*Juwadey{},
+		End:      make(chan struct{}),
 	}
 	return &f
 }
@@ -32,8 +33,8 @@ func (f *Faras) GameLoop() {
 		time.Sleep(2 * time.Second)
 	}
 
-	fmt.Println("Game has ended. Server is shutting down.")
-	os.Exit(0)
+	fmt.Println("Game has ended.")
+	f.End <- struct{}{}
 }
 
 func (f *Faras) dealCards() {
@@ -70,4 +71,14 @@ func (f *Faras) updateScoreboard() {
 			fmt.Fprintf(j.Conn, "Scoreboard: %s has %d wins\n", juwadey.Name, juwadey.Wins)
 		}
 	}
+}
+
+func (f *Faras) Reset() {
+
+	for _, juwadey := range f.Juwadeys {
+		juwadey.Conn.Close()
+	}
+
+	f.Juwadeys = []*Juwadey{}
+	f.CurrentRound = 0
 }
