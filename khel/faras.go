@@ -1,15 +1,6 @@
 package khel
 
-import (
-	"fmt"
-	"time"
-
-	"github.com/cloudhonk/faras/bung"
-)
-
 //  TODO: Right now its just some random game simulated as faras. Need to do the actual game logic here.
-
-const MAX_ROUND = 10
 
 type Faras struct {
 	Juwadeys     []*Juwadey
@@ -25,60 +16,60 @@ func NewFaras() *Faras {
 	return &f
 }
 
-func (f *Faras) GameLoop() {
-	for f.CurrentRound = 1; f.CurrentRound <= MAX_ROUND; f.CurrentRound++ {
-		f.dealCards()
-		f.findWinner()
-		f.updateScoreboard()
-		time.Sleep(2 * time.Second)
-	}
+// func (f *Faras) GameLoop() {
+// 	for f.CurrentRound = 1; f.CurrentRound <= 10; f.CurrentRound++ {
+// 		f.dealCards()
+// 		f.findWinner()
+// 		f.updateScoreboard()
+// 		time.Sleep(2 * time.Second)
+// 	}
 
-	fmt.Println("Game has ended.")
-	f.End <- struct{}{}
-}
+// 	fmt.Println("Game has ended.")
+// 	f.End <- struct{}{}
+// }
 
-func (f *Faras) dealCards() {
+// func (f *Faras) dealCards() {
 
-	deck := bung.New()
+// 	deck := bung.New()
 
-	for i, juwadey := range f.Juwadeys {
-		juwadey.Taas = deck[i]
-	}
-}
+// 	for i, juwadey := range f.Juwadeys {
+// 		juwadey.Haat = []*bung.Taas{&deck[i]}
+// 	}
+// }
 
-func (f *Faras) findWinner() {
-	var winner *Juwadey
-	highestCard := -1
+// func (f *Faras) findWinner() {
+// 	var winner *Juwadey
+// 	highestCard := -1
 
-	for _, juwadey := range f.Juwadeys {
-		if int(juwadey.Taas.Patti) > highestCard {
-			highestCard = int(juwadey.Taas.Patti)
-			winner = juwadey
-		}
-	}
+// 	for _, juwadey := range f.Juwadeys {
+// 		if int(juwadey.Haat.Patti) > highestCard {
+// 			highestCard = int(juwadey.Haat.Patti)
+// 			winner = juwadey
+// 		}
+// 	}
 
-	if winner != nil {
-		winner.Wins++
-		for _, Juwadey := range f.Juwadeys {
-			fmt.Fprintf(Juwadey.Conn, "Round %d Winner: %s with card %s\n", f.CurrentRound, winner.Name, winner.Taas.String())
-		}
-	}
-}
+// 	if winner != nil {
+// 		winner.Wins++
+// 		for _, Juwadey := range f.Juwadeys {
+// 			fmt.Fprintf(Juwadey.Conn, "Round %d Winner: %s with card %s\n", f.CurrentRound, winner.Name, winner.Haat.String())
+// 		}
+// 	}
+// }
 
-func (f *Faras) updateScoreboard() {
-	for _, juwadey := range f.Juwadeys {
-		for _, j := range f.Juwadeys {
-			fmt.Fprintf(j.Conn, "Scoreboard: %s has %d wins\n", juwadey.Name, juwadey.Wins)
-		}
-	}
-}
+// func (f *Faras) updateScoreboard() {
+// 	for _, juwadey := range f.Juwadeys {
+// 		for _, j := range f.Juwadeys {
+// 			fmt.Fprintf(j.Conn, "Scoreboard: %s has %d wins\n", juwadey.Name, juwadey.Wins)
+// 		}
+// 	}
+// }
 
-func (f *Faras) Reset() {
+// func (f *Faras) Reset() {
 
-	for _, juwadey := range f.Juwadeys {
-		juwadey.Conn.Close()
-	}
+// 	for _, juwadey := range f.Juwadeys {
+// 		juwadey.Conn.Close()
+// 	}
 
-	f.Juwadeys = []*Juwadey{}
-	f.CurrentRound = 0
-}
+// 	f.Juwadeys = []*Juwadey{}
+// 	f.CurrentRound = 0
+// }

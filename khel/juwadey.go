@@ -6,10 +6,17 @@ import (
 	"github.com/cloudhonk/faras/bung"
 )
 
+const (
+	BOTTOM = iota
+	RIGHT
+	TOP
+	LEFT
+)
+
 type Juwadey struct {
 	Conn net.Conn
 	Name string
-	Taas bung.Taas
+	Haat []*bung.Taas
 	Wins int
 }
 
