@@ -16,7 +16,7 @@ const (
 type Juwadey struct {
 	conn net.Conn
 	Name string
-	Haat []*bung.Taas
+	Haat
 }
 
 func newJuwadey(name string, conn net.Conn) *Juwadey {

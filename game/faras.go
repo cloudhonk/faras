@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -43,7 +44,8 @@ func (f *Faras) addJuwadey(juwadey *Juwadey) {
 func (f *Faras) gameLoop() {
 	deck := bung.New()
 
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
 
 	for i := range CARDS_PER_JUWADEY {
 		for j, juwadey := range f.juwadeys {
@@ -52,6 +54,18 @@ func (f *Faras) gameLoop() {
 			f.update <- f.id
 		}
 	}
-	ticker.Stop()
+	var juwadeys []Juwadey
+
+	for _, juwadey := range f.juwadeys {
+		juwadeys = append(juwadeys, *juwadey)
+	}
+	winner := determineWinner(juwadeys)
+	winnerHandRank := getHandRank(winner.Haat)
+
+	msg := fmt.Sprintf("\n%s wins game with a %s", winner.Name, handRankToStr(winnerHandRank))
+	for _, juwadey := range f.juwadeys {
+		juwadey.conn.Write([]byte(msg))
+	}
+
 	f.end <- f.id
 }
