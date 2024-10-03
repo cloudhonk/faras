@@ -25,6 +25,9 @@ var Pattiharu = []Patti{Dua, Tirki, Chauka, Panja, Chhaka, Satta, Attha, Nahar, 
 func (p *Patti) String() string {
 	switch *p {
 
+	case Dahar:
+		return "X"
+
 	case Gulam:
 		return "J"
 

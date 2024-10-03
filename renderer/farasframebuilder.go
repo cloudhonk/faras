@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/cloudhonk/faras/khel"
+	"github.com/cloudhonk/faras/game"
 )
 
 type FarasFrameConfig struct {
@@ -17,24 +17,18 @@ type FarasFrame struct {
 	frame [][]rune
 }
 
-type GetPlayersManager interface {
-	GetPlayers() []*khel.Juwadey
-}
-
 type FarasFrameBuilder struct {
-	PlayerManager GetPlayersManager
 	FarasFrame
 	FarasFrameConfig
 }
 
-func NewFarasFrameBuilder(config FarasFrameConfig, playerManager GetPlayersManager) *FarasFrameBuilder {
+func NewFarasFrameBuilder(config FarasFrameConfig) *FarasFrameBuilder {
 	return &FarasFrameBuilder{
 		FarasFrameConfig: config,
-		PlayerManager:    playerManager,
 	}
 }
 
-func (ffb *FarasFrameBuilder) InitFrame() *FarasFrameBuilder {
+func (ffb *FarasFrameBuilder) initFrame() *FarasFrameBuilder {
 	ffb.frame = make([][]rune, ffb.Height)
 	for i := range ffb.frame {
 		ffb.frame[i] = make([]rune, ffb.Width)
@@ -49,7 +43,7 @@ func (ffb *FarasFrameBuilder) InitFrame() *FarasFrameBuilder {
 	return ffb
 }
 
-func (ffb *FarasFrameBuilder) AddTable() *FarasFrameBuilder {
+func (ffb *FarasFrameBuilder) addTable() *FarasFrameBuilder {
 
 	var sb strings.Builder
 	sb.WriteString(strings.Repeat(" ", ffb.Padding))
@@ -67,12 +61,12 @@ func (ffb *FarasFrameBuilder) AddTable() *FarasFrameBuilder {
 	return ffb
 }
 
-func (ffb *FarasFrameBuilder) AddPlayers(players []*khel.Juwadey) *FarasFrameBuilder {
+func (ffb *FarasFrameBuilder) addPlayers(players []*game.Juwadey) *FarasFrameBuilder {
 	for i, player := range players {
 		nameLen := len(player.Name)
 		switch {
 
-		case i == khel.BOTTOM:
+		case i == game.BOTTOM:
 
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
@@ -87,36 +81,36 @@ func (ffb *FarasFrameBuilder) AddPlayers(players []*khel.Juwadey) *FarasFrameBui
 				}
 			}
 
-		case i == khel.RIGHT:
+		case i == game.RIGHT:
 
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
-					ffb.frame[ffb.Height/2-1][ffb.Width-ffb.Padding-1-nameLen+i] = ch
+					ffb.frame[ffb.Height/2-1][ffb.Width-ffb.Padding-2-nameLen+i] = ch
 				}
 			}
 
 			for i, taas := range player.Haat {
 				unicodeCharCount := utf8.RuneCountInString(taas.String())
 				for j := range unicodeCharCount {
-					ffb.frame[ffb.Height/2][ffb.Width-ffb.Padding-1-6+j+i*unicodeCharCount] = []rune(taas.String())[j]
+					ffb.frame[ffb.Height/2][ffb.Width-ffb.Padding-2-3*unicodeCharCount+j+i*unicodeCharCount] = []rune(taas.String())[j]
 				}
 			}
 
-		case i == khel.LEFT:
+		case i == game.LEFT:
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
-					ffb.frame[ffb.Height/2-1][ffb.Padding+1+i] = ch
+					ffb.frame[ffb.Height/2-1][ffb.Padding+2+i] = ch
 				}
 			}
 
 			for i, taas := range player.Haat {
 				unicodeCharCount := utf8.RuneCountInString(taas.String())
 				for j := range unicodeCharCount {
-					ffb.frame[ffb.Height/2][ffb.Padding+1+j+i*unicodeCharCount] = []rune(taas.String())[j]
+					ffb.frame[ffb.Height/2][ffb.Padding+2+j+i*unicodeCharCount] = []rune(taas.String())[j]
 				}
 			}
 
-		case i == khel.TOP:
+		case i == game.TOP:
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
 					ffb.frame[ffb.Padding+1][ffb.Width/2-nameLen/2+i] = ch
@@ -135,7 +129,7 @@ func (ffb *FarasFrameBuilder) AddPlayers(players []*khel.Juwadey) *FarasFrameBui
 	return ffb
 }
 
-func (ffb *FarasFrameBuilder) AddLogo() *FarasFrameBuilder {
+func (ffb *FarasFrameBuilder) addLogo() *FarasFrameBuilder {
 	// ASCII art for "FARAS"
 	logo := []string{
 		" *****   *****  *****   *****  ***** ",
@@ -164,13 +158,13 @@ func (ffb *FarasFrameBuilder) AddLogo() *FarasFrameBuilder {
 	return ffb
 }
 
-func (ffb *FarasFrameBuilder) Build(playerRef int) {
+func (ffb *FarasFrameBuilder) Build(juwadeys []*game.Juwadey) {
 
 	ffb.
-		InitFrame().
-		AddTable().
-		AddLogo().
-		AddPlayers(khel.RotatePlayers(ffb.PlayerManager.GetPlayers(), playerRef))
+		initFrame().
+		addTable().
+		addLogo().
+		addPlayers(juwadeys)
 }
 
 func (ffb *FarasFrameBuilder) Flush() []byte {
@@ -187,13 +181,3 @@ func (ffb *FarasFrameBuilder) Flush() []byte {
 	sb.WriteString(frame)
 	return []byte(sb.String())
 }
-
-// func main() {
-// 	config := FarasFrameConfig{
-// 		Width:   80,
-// 		Height:  25,
-// 		Padding: 2,
-// 	}
-// 	ffb := NewFarasFrameBuilder(config)
-// 	ffb.InitFrame().AddTable().AddLogo().Build()
-// }

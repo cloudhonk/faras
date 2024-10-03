@@ -1,26 +1,26 @@
 package main
 
 import (
-	"github.com/cloudhonk/faras/khel"
+	"github.com/cloudhonk/faras/game"
 	"github.com/cloudhonk/faras/renderer"
 	"github.com/cloudhonk/faras/server"
 )
 
 func main() {
 
-	farasInstance := khel.NewFaras()
-
 	farasFrameConfig := renderer.FarasFrameConfig{
-		Width:   80,
-		Height:  25,
-		Padding: 2,
+		Width:   renderer.WINDOW_WIDTH,
+		Height:  renderer.WINDOW_HEIGHT,
+		Padding: renderer.WINDOW_PADDING,
 	}
-	farasPlayerManager := khel.NewFarasPlayerManager()
-	farasFrameBuilder := renderer.NewFarasFrameBuilder(farasFrameConfig, farasPlayerManager)
-	farasGameManager := server.NewFarasGameManager(farasFrameBuilder, farasInstance, farasPlayerManager)
+
+	farasFrameBuilder := renderer.NewFarasFrameBuilder(farasFrameConfig)
+	farasGameManager := game.NewFarasGameManager(farasFrameBuilder)
 	gameServer := server.NewGameServer(farasGameManager)
 
 	go gameServer.StartServer()
+	go farasGameManager.Update()
+	go farasGameManager.End()
 
-	select {} // Keep the main function running
+	select {}
 }

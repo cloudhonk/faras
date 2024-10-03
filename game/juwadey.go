@@ -1,4 +1,4 @@
-package khel
+package game
 
 import (
 	"net"
@@ -14,16 +14,16 @@ const (
 )
 
 type Juwadey struct {
-	Conn net.Conn
+	conn net.Conn
 	Name string
 	Haat []*bung.Taas
-	Wins int
 }
 
-func NewJuwadey(name string, conn net.Conn) *Juwadey {
+func newJuwadey(name string, conn net.Conn) *Juwadey {
 	j := Juwadey{
 		Name: name,
-		Conn: conn,
+		conn: conn,
+		Haat: make([]*bung.Taas, 0),
 	}
 	return &j
 }
