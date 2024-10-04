@@ -45,15 +45,15 @@ func (f *Faras) gameLoop() {
 	deck := bung.New()
 
 	ticker := time.NewTicker(2 * time.Second)
-	defer ticker.Stop()
 
 	for i := range CARDS_PER_JUWADEY {
 		for j, juwadey := range f.juwadeys {
 			juwadey.Haat = append(juwadey.Haat, &deck[j+i*CARDS_PER_JUWADEY])
-			<-ticker.C
 			f.update <- f.id
+			<-ticker.C
 		}
 	}
+	ticker.Stop()
 	var juwadeys []Juwadey
 
 	for _, juwadey := range f.juwadeys {
