@@ -8,52 +8,64 @@ import (
 	"github.com/cloudhonk/faras/bung"
 )
 
-type Faras struct {
+type faras struct {
 	id       uint64
 	juwadeys []*Juwadey
 	update   chan uint64
 	end      chan uint64
-	mu       *sync.Mutex
+	mu       sync.RWMutex
 }
 
-func newFaras(id uint64, update, end chan uint64) *Faras {
-	f := Faras{
+func newFaras(id uint64, update, end chan uint64) *faras {
+	f := faras{
 		id:       id,
 		juwadeys: []*Juwadey{},
 		update:   update,
 		end:      end,
-		mu:       &sync.Mutex{},
+		mu:       sync.RWMutex{},
 	}
 	return &f
 }
 
-func (f *Faras) addJuwadey(juwadey *Juwadey) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
+func (f *faras) getJuwadeys() []*Juwadey {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.juwadeys
+}
 
-	if len(f.juwadeys) < JUWADEYS_PER_GAME {
+func (f *faras) addJuwadey(juwadey *Juwadey) {
+
+	if f.getTotalJuwadeys() < JUWADEYS_PER_GAME {
+		f.mu.Lock()
 		f.juwadeys = append(f.juwadeys, juwadey)
+		f.mu.Unlock()
 		f.update <- f.id
 
-		if len(f.juwadeys) == JUWADEYS_PER_GAME {
+		if f.getTotalJuwadeys() == JUWADEYS_PER_GAME {
 			go f.gameLoop()
 		}
 	}
 }
 
-func (f *Faras) gameLoop() {
+func (f *faras) getTotalJuwadeys() int {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return len(f.juwadeys)
+}
+
+func (f *faras) gameLoop() {
 	deck := bung.New()
 
 	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
 
 	for i := range CARDS_PER_JUWADEY {
-		for j, juwadey := range f.juwadeys {
+		for j, juwadey := range f.getJuwadeys() {
 			juwadey.Haat = append(juwadey.Haat, &deck[j+i*CARDS_PER_JUWADEY])
 			f.update <- f.id
 			<-ticker.C
 		}
 	}
-	ticker.Stop()
 	var juwadeys []Juwadey
 
 	for _, juwadey := range f.juwadeys {
@@ -66,6 +78,5 @@ func (f *Faras) gameLoop() {
 	for _, juwadey := range f.juwadeys {
 		juwadey.conn.Write([]byte(msg))
 	}
-
 	f.end <- f.id
 }

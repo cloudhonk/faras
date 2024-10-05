@@ -1,7 +1,7 @@
 package game
 
 const (
-	JUWADEYS_PER_GAME = 4
+	JUWADEYS_PER_GAME = 2
 	CARDS_PER_JUWADEY = 3
 )
 

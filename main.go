@@ -19,8 +19,6 @@ func main() {
 	gameServer := server.NewGameServer(farasGameManager)
 
 	go gameServer.StartServer()
-	go farasGameManager.Update()
-	go farasGameManager.End()
 
 	select {}
 }

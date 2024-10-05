@@ -5,10 +5,6 @@ import (
 	"net"
 )
 
-const (
-	MAX_PLAYERS = 4
-)
-
 type GameManager interface {
 	Join(conn net.Conn)
 	Update()
@@ -36,10 +32,11 @@ func (s *GameServer) StartServer() {
 	}
 	defer listener.Close()
 
+	go s.Manager.Update()
+	go s.Manager.End()
+
 	fmt.Println("Server started. Waiting for players...")
-
 	for {
-
 		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection:", err)
