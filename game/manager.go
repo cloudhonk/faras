@@ -5,6 +5,8 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
+
+	"github.com/cloudhonk/faras/logger"
 )
 
 type frameBuilder interface {
@@ -51,6 +53,7 @@ func (fgm *farasGameManager) Join(conn net.Conn) {
 		}
 	}
 	faras := fgm.newGame()
+	logger.Log.Info(fmt.Sprintf("Creating new game with id: %d", faras.id))
 	fgm.mu.Lock()
 	defer fgm.mu.Unlock()
 	fgm.games[faras.id] = faras
@@ -73,22 +76,37 @@ func (fgm *farasGameManager) End() {
 }
 
 func (fgm *farasGameManager) broadcast(id uint64) {
-	for i, juwadey := range fgm.games[id].getJuwadeys() {
+	game, ok := fgm.games[id]
+	if !ok {
+		logger.Log.Error(fmt.Sprintf("Game %d not found", id))
+		return
+	}
+	for i, juwadey := range game.getJuwadeys() {
 		fgm.frameBuilder.Build(rotatePlayers(fgm.games[id].getJuwadeys(), i))
-		juwadey.conn.Write(fgm.frameBuilder.Flush())
+		if _, err := juwadey.conn.Write(fgm.frameBuilder.Flush()); err != nil {
+			logger.Log.Error(fmt.Sprintf("error writing to player %s: %s", juwadey.Name, err))
+		}
 	}
 
 }
 
 func (fgm *farasGameManager) removeGame(id uint64) {
-
-	for _, juwadey := range fgm.games[id].juwadeys {
-		juwadey.conn.Close()
+	game, ok := fgm.games[id]
+	if !ok {
+		logger.Log.Error(fmt.Sprintf("Game %d not found", id))
+		return
+	}
+	for _, juwadey := range game.getJuwadeys() {
+		if err := juwadey.conn.Close(); err != nil {
+			logger.Log.Error(fmt.Sprintf("error closing connection: %s", err))
+			continue
+		}
 	}
 
 	fgm.mu.Lock()
 	defer fgm.mu.Unlock()
 	delete(fgm.games, id)
+	logger.Log.Info(fmt.Sprintf("Game %d ended", id))
 
 }
 

@@ -18,7 +18,11 @@ func main() {
 	farasGameManager := game.NewFarasGameManager(farasFrameBuilder)
 	gameServer := server.NewGameServer(farasGameManager)
 
-	go gameServer.StartServer()
+	err := gameServer.StartServer()
+
+	if err != nil {
+		panic("Failed to start server")
+	}
 
 	select {}
 }

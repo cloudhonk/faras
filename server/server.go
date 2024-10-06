@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"net"
+
+	"github.com/cloudhonk/faras/logger"
 )
 
 type GameManager interface {
@@ -23,23 +25,29 @@ func NewGameServer(manager GameManager) *GameServer {
 	return &s
 }
 
-func (s *GameServer) StartServer() {
+func (s *GameServer) StartServer() error {
 
 	listener, err := net.Listen("tcp", ":8080")
+
 	if err != nil {
-		fmt.Println("Error starting server:", err)
-		return
+		logger.Log.Error(fmt.Sprintf("error statring server: %s", err))
+		return err
 	}
-	defer listener.Close()
+
+	defer func() {
+		if err := listener.Close(); err != nil {
+			logger.Log.Error(fmt.Sprintf("error closing listener: %s", err))
+		}
+	}()
 
 	go s.Manager.Update()
 	go s.Manager.End()
 
-	fmt.Println("Server started. Waiting for players...")
+	logger.Log.Info("Server started. Waiting for players...")
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println("Error accepting connection:", err)
+			logger.Log.Error(fmt.Sprintf("error accepting connection: %s", err))
 			continue
 		}
 
