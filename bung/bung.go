@@ -7,8 +7,8 @@ type Bung []Taas
 func New() Bung {
 	bung := Bung{}
 	for _, patti := range Pattiharu {
-		for _, turup := range Turupharu {
-			bung = append(bung, Taas{Patti: patti, Turup: turup})
+		for _, rangi := range Rangiharu {
+			bung = append(bung, Taas{Patti: patti, Rangi: rangi})
 		}
 	}
 	bung.Fitt()

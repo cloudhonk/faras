@@ -3,76 +3,55 @@ package server
 import (
 	"fmt"
 	"net"
-	"sync"
 
-	"github.com/cloudhonk/faras/khel"
+	"github.com/cloudhonk/faras/logger"
 )
 
-const (
-	MAX_PLAYERS = 4
-)
-
-type GameServer struct {
-	GameInstance *khel.Faras
-	mu           sync.Mutex
+type GameManager interface {
+	Join(conn net.Conn)
+	Update()
+	End()
 }
 
-func NewGameServer(instance *khel.Faras) *GameServer {
+type GameServer struct {
+	Manager GameManager
+}
+
+func NewGameServer(manager GameManager) *GameServer {
 	s := GameServer{
-		GameInstance: instance,
+		Manager: manager,
 	}
 
 	return &s
 }
 
-func (s *GameServer) StartServer() {
+func (s *GameServer) StartServer() error {
+
 	listener, err := net.Listen("tcp", ":8080")
+
 	if err != nil {
-		fmt.Println("Error starting server:", err)
-		return
+		logger.Log.Error(fmt.Sprintf("error statring server: %s", err))
+		return err
 	}
-	defer listener.Close()
 
-	fmt.Println("Server started. Waiting for players...")
+	defer func() {
+		if err := listener.Close(); err != nil {
+			logger.Log.Error(fmt.Sprintf("error closing listener: %s", err))
+		}
+	}()
 
+	go s.Manager.Update()
+	go s.Manager.End()
+
+	logger.Log.Info("Server started. Waiting for players...")
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println("Error accepting connection:", err)
+			logger.Log.Error(fmt.Sprintf("error accepting connection: %s", err))
 			continue
 		}
 
-		go s.handleConnection(conn)
+		go s.Manager.Join(conn)
+
 	}
-}
-
-func (s *GameServer) handleConnection(conn net.Conn) {
-	defer conn.Close()
-	s.addPlayer(conn)
-	if len(s.GameInstance.Juwadeys) == MAX_PLAYERS {
-		go s.GameInstance.GameLoop()
-	}
-
-	// Keep the connection open
-	select {}
-}
-
-func (s *GameServer) addPlayer(conn net.Conn) {
-
-	var playerName string
-	fmt.Fprintln(conn, "Enter your name: ")
-	fmt.Fscanln(conn, &playerName)
-
-	s.mu.Lock()
-	if len(s.GameInstance.Juwadeys) >= MAX_PLAYERS {
-		fmt.Fprintln(conn, "The game is full!")
-		s.mu.Unlock()
-		return
-	}
-
-	juwadey := khel.NewJuwadey(playerName, conn)
-	s.GameInstance.Juwadeys = append(s.GameInstance.Juwadeys, juwadey)
-	s.mu.Unlock()
-
-	fmt.Fprintf(conn, "Welcome, %s! Waiting for other players...\n", playerName)
 }

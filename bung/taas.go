@@ -4,9 +4,9 @@ import "fmt"
 
 type Taas struct {
 	Patti
-	Turup
+	Rangi
 }
 
 func (t *Taas) String() string {
-	return fmt.Sprintf("%s को %s", t.Turup.String(), t.Patti.String())
+	return fmt.Sprintf("%s%s", t.Rangi.String(), t.Patti.String())
 }

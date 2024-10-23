@@ -1,6 +1,6 @@
 package bung
 
-type Turup int
+type Rangi int
 
 const (
 	Paan = iota + 1
@@ -9,9 +9,9 @@ const (
 	Hukum
 )
 
-var Turupharu = []Turup{Paan, Itta, Chidi, Hukum}
+var Rangiharu = []Rangi{Paan, Itta, Chidi, Hukum}
 
-func (s *Turup) String() string {
+func (s *Rangi) String() string {
 
 	switch *s {
 
