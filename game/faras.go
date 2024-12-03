@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/cloudhonk/faras/bung"
@@ -12,7 +11,6 @@ import (
 type faras struct {
 	id           uint64
 	juwadeys     []*Juwadey
-	mu           sync.RWMutex
 	frameBuilder frameBuilder
 }
 
@@ -25,15 +23,12 @@ func newFaras(id uint64) *faras {
 	f := faras{
 		id:           id,
 		juwadeys:     []*Juwadey{},
-		mu:           sync.RWMutex{},
 		frameBuilder: NewFarasFrameBuilder(farasFrameConfig),
 	}
 	return &f
 }
 
 func (f *faras) getJuwadeys() []*Juwadey {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
 	return f.juwadeys
 }
 
