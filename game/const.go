@@ -1,7 +1,7 @@
 package game
 
 const (
-	JUWADEYS_PER_GAME = 2
+	JUWADEYS_PER_GAME = 4
 	CARDS_PER_JUWADEY = 3
 )
 
@@ -12,4 +12,9 @@ const (
 	RUN
 	DABLING_RUN
 	TRIAL
+)
+const (
+	WINDOW_WIDTH   = 80
+	WINDOW_HEIGHT  = 25
+	WINDOW_PADDING = 2
 )

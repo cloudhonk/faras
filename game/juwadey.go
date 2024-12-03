@@ -19,7 +19,7 @@ type Juwadey struct {
 	Haat
 }
 
-func newJuwadey(name string, conn net.Conn) *Juwadey {
+func NewJuwadey(name string, conn net.Conn) *Juwadey {
 	j := Juwadey{
 		Name: name,
 		conn: conn,
