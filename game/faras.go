@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/cloudhonk/faras/bung"
@@ -10,53 +9,42 @@ import (
 )
 
 type faras struct {
-	id       uint64
-	juwadeys []*Juwadey
-	update   chan uint64
-	end      chan uint64
-	mu       sync.RWMutex
+	id           uint64
+	juwadeys     []*Juwadey
+	frameBuilder frameBuilder
 }
 
-func newFaras(id uint64, update, end chan uint64) *faras {
+func newFaras(id uint64) *faras {
+	farasFrameConfig := FarasFrameConfig{
+		Width:   WINDOW_WIDTH,
+		Height:  WINDOW_HEIGHT,
+		Padding: WINDOW_PADDING,
+	}
 	f := faras{
-		id:       id,
-		juwadeys: []*Juwadey{},
-		update:   update,
-		end:      end,
-		mu:       sync.RWMutex{},
+		id:           id,
+		juwadeys:     []*Juwadey{},
+		frameBuilder: NewFarasFrameBuilder(farasFrameConfig),
 	}
 	return &f
 }
 
 func (f *faras) getJuwadeys() []*Juwadey {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
 	return f.juwadeys
 }
 
 func (f *faras) addJuwadey(juwadey *Juwadey) {
 
-	if f.getTotalJuwadeys() < JUWADEYS_PER_GAME {
-		logger.Log.Info(fmt.Sprintf("Adding player %s to game %d", juwadey.Name, f.id))
-		f.mu.Lock()
-		f.juwadeys = append(f.juwadeys, juwadey)
-		f.mu.Unlock()
-		f.update <- f.id
-
-		if f.getTotalJuwadeys() == JUWADEYS_PER_GAME {
-			logger.Log.Info(fmt.Sprintf("Starting game %d", f.id))
-			go f.gameLoop()
+	logger.Log.Info(fmt.Sprintf("Adding player %s to game %d", juwadey.Name, f.id))
+	f.juwadeys = append(f.juwadeys, juwadey)
+	for i, juwadey := range f.getJuwadeys() {
+		f.frameBuilder.Build(rotatePlayers(f.getJuwadeys(), i))
+		if _, err := juwadey.conn.Write(f.frameBuilder.Flush()); err != nil {
+			logger.Log.Error(fmt.Sprintf("error writing to player %s: %s", juwadey.Name, err))
 		}
 	}
 }
 
-func (f *faras) getTotalJuwadeys() int {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-	return len(f.juwadeys)
-}
-
-func (f *faras) gameLoop() {
+func (f *faras) GameLoop() {
 	deck := bung.New()
 
 	ticker := time.NewTicker(2 * time.Second)
@@ -67,7 +55,12 @@ func (f *faras) gameLoop() {
 			taas := &deck[j+i*CARDS_PER_JUWADEY]
 			juwadey.Haat = append(juwadey.Haat, taas)
 			logger.Log.Info(fmt.Sprintf("Game %d: Dealt card %s to juwadey %s", f.id, taas, juwadey.Name))
-			f.update <- f.id
+			for i, juwadey := range f.getJuwadeys() {
+				f.frameBuilder.Build(rotatePlayers(f.getJuwadeys(), i))
+				if _, err := juwadey.conn.Write(f.frameBuilder.Flush()); err != nil {
+					logger.Log.Error(fmt.Sprintf("error writing to player %s: %s", juwadey.Name, err))
+				}
+			}
 			<-ticker.C
 		}
 	}
@@ -83,6 +76,6 @@ func (f *faras) gameLoop() {
 	logger.Log.Info(msg)
 	for _, juwadey := range f.juwadeys {
 		juwadey.conn.Write([]byte("\n" + msg + "\n"))
+		juwadey.conn.Close()
 	}
-	f.end <- f.id
 }

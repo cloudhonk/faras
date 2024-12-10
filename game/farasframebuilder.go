@@ -1,10 +1,8 @@
-package renderer
+package game
 
 import (
 	"strings"
 	"unicode/utf8"
-
-	"github.com/cloudhonk/faras/game"
 )
 
 type FarasFrameConfig struct {
@@ -61,12 +59,12 @@ func (ffb *FarasFrameBuilder) addTable() *FarasFrameBuilder {
 	return ffb
 }
 
-func (ffb *FarasFrameBuilder) addPlayers(players []*game.Juwadey) *FarasFrameBuilder {
+func (ffb *FarasFrameBuilder) addPlayers(players []*Juwadey) *FarasFrameBuilder {
 	for i, player := range players {
 		nameLen := len(player.Name)
 		switch {
 
-		case i == game.BOTTOM:
+		case i == BOTTOM:
 
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
@@ -81,7 +79,7 @@ func (ffb *FarasFrameBuilder) addPlayers(players []*game.Juwadey) *FarasFrameBui
 				}
 			}
 
-		case i == game.RIGHT:
+		case i == RIGHT:
 
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
@@ -96,7 +94,7 @@ func (ffb *FarasFrameBuilder) addPlayers(players []*game.Juwadey) *FarasFrameBui
 				}
 			}
 
-		case i == game.LEFT:
+		case i == LEFT:
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
 					ffb.frame[ffb.Height/2-1][ffb.Padding+2+i] = ch
@@ -110,7 +108,7 @@ func (ffb *FarasFrameBuilder) addPlayers(players []*game.Juwadey) *FarasFrameBui
 				}
 			}
 
-		case i == game.TOP:
+		case i == TOP:
 			for i, ch := range player.Name {
 				if ffb.Padding+i < ffb.Width {
 					ffb.frame[ffb.Padding+1][ffb.Width/2-nameLen/2+i] = ch
@@ -158,7 +156,7 @@ func (ffb *FarasFrameBuilder) addLogo() *FarasFrameBuilder {
 	return ffb
 }
 
-func (ffb *FarasFrameBuilder) Build(juwadeys []*game.Juwadey) {
+func (ffb *FarasFrameBuilder) Build(juwadeys []*Juwadey) {
 
 	ffb.
 		initFrame().

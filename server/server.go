@@ -4,22 +4,23 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/cloudhonk/faras/game"
 	"github.com/cloudhonk/faras/logger"
 )
 
 type GameManager interface {
-	Join(conn net.Conn)
-	Update()
-	End()
+	Begin(juwadeyChan chan *game.Juwadey)
 }
 
 type GameServer struct {
-	Manager GameManager
+	Manager     GameManager
+	juwadeyChan chan *game.Juwadey
 }
 
 func NewGameServer(manager GameManager) *GameServer {
 	s := GameServer{
-		Manager: manager,
+		Manager:     manager,
+		juwadeyChan: make(chan *game.Juwadey),
 	}
 
 	return &s
@@ -40,9 +41,7 @@ func (s *GameServer) StartServer() error {
 		}
 	}()
 
-	go s.Manager.Update()
-	go s.Manager.End()
-
+	go s.Manager.Begin(s.juwadeyChan)
 	logger.Log.Info("Server started. Waiting for players...")
 	for {
 		conn, err := listener.Accept()
@@ -51,7 +50,18 @@ func (s *GameServer) StartServer() error {
 			continue
 		}
 
-		go s.Manager.Join(conn)
+		go s.handleConnection(conn)
 
 	}
+}
+
+func (s *GameServer) handleConnection(conn net.Conn) {
+
+	var name string
+	conn.Write([]byte("Enter your name: "))
+	fmt.Fscanln(conn, &name)
+	juwadey := game.NewJuwadey(name, conn)
+
+	s.juwadeyChan <- juwadey
+
 }
